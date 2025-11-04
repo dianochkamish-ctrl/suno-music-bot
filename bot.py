@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import logging
 import asyncio
@@ -6,25 +7,25 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 import aiohttp
 import json
 
-# Setup logging
+# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Your tokens (will be set via environment variables)
+# Ваши токены (будут заданы через переменные окружения)
 TOKEN = os.environ.get("BOT_TOKEN")
 SUNO_API_KEY = os.environ.get("SUNO_API_KEY")
 
-# Start command handler
+# Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
-        "Hello! I am a music generation bot using Suno AI. 🎵\n\n"
-        "Just send me a description of the song you want to hear, "
-        "and I will create it for you!\n\n"
-        "For example, try sending: 'Happy pop song about summer'"
+        "Привет! Я бот для генерации музыки с помощью Suno AI. 🎵\n\n"
+        "Просто напиши мне описание песни, которую ты хочешь услышать, "
+        "и я создам ее для тебя!\n\n"
+        "Например, попробуй отправить: 'Веселая поп-песня о лете'"
     )
     await update.message.reply_text(welcome_text)
 
-# Function to send request to Suno API
+# Функция для отправки запроса к Suno API
 async def generate_suno_song(prompt: str):
     api_url = "https://api.sunoapi.org/api/v1/generate"
     headers = {
@@ -42,32 +43,32 @@ async def generate_suno_song(prompt: str):
             if result.get('code') == 200:
                 return result['data']['taskId']
             else:
-                logger.error(f"Suno API error: {result.get('msg')}")
+                logger.error(f"Ошибка Suno API: {result.get('msg')}")
                 return None
 
-# Text message handler (song description)
+# Обработчик текстовых сообщений
 async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_prompt = update.message.text
-    await update.message.reply_text("🎵 Got your request! Generating music... This will take a few minutes.")
+    await update.message.reply_text("🎵 Принял твой запрос! Генерирую музыку... Это займет несколько минут.")
 
-    # Send request to Suno
+    # Отправляем запрос в Suno
     task_id = await generate_suno_song(user_prompt)
 
     if task_id:
-        await update.message.reply_text(f"✅ Task created! ID: {task_id}. Please wait, I will send the result soon.")
+        await update.message.reply_text(f"✅ Задача создана! ID: {task_id}. Ожидайте, скоро пришлю результат.")
     else:
-        await update.message.reply_text("❌ Sorry, there was an error creating the song. Please try again later.")
+        await update.message.reply_text("❌ К сожалению, при создании песни произошла ошибка. Попробуй еще раз позже.")
 
-# Main function
+# Основная функция
 def main():
-    # Create Telegram bot application
+    # Создаем приложение Telegram бота
     application = Application.builder().token(TOKEN).build()
 
-    # Register handlers
+    # Регистрируем обработчики
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_description))
 
-    # Start the bot
+    # Запускаем бота
     application.run_polling()
 
 if __name__ == "__main__":
